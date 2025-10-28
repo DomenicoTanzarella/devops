@@ -43,6 +43,9 @@ brew install \
   ghq \
   fzf \
   bat \
+  mtr \
+  httpie \
+  tldr \
   neofetch
 
 # --- Terminal & shells ---
@@ -89,6 +92,8 @@ brew install --cask figma
 echo "🔒 Installing security utilities..."
 brew install gpg
 brew install --cask little-snitch
+brew install --cask wireshark
+brew install --cask wireshark-app
 
 # --- Cleanup ---
 echo "🧹 Cleaning up..."
