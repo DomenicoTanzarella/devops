@@ -2,10 +2,14 @@
 # ===========================================================
 #  DevOps/SRE Mac Setup Script
 #  Author: Domenico Tanzarella
-#  Description: Installs essential productivity + DevOps tools on macOS
+#  Description:
+#     Installs essential CLI + GUI tools for DevOps/SRE work.
+#     Includes Zsh + Oh My Zsh + Powerlevel10k + local dev envs.
 # ===========================================================
 
-# --- Check Homebrew ---
+set -e
+
+# --- Homebrew setup ---
 if ! command -v brew &>/dev/null; then
   echo "🍺 Homebrew not found. Installing..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -19,7 +23,7 @@ echo "🔄 Updating Homebrew..."
 brew update
 
 # --- Core CLI tools ---
-echo "⚙️ Installing CLI utilities..."
+echo "⚙️ Installing core DevOps utilities..."
 brew install \
   git \
   gh \
@@ -33,6 +37,8 @@ brew install \
   watch \
   kubectl \
   k9s \
+  kubectx \
+  kubens \
   helm \
   terraform \
   awscli \
@@ -58,8 +64,16 @@ echo "🐳 Installing container tools..."
 brew install --cask docker
 brew install dive kubectx kubens
 
-# --- Cloud simulators & dashboards ---
-echo "☁️ Installing LocalStack & Lens..."
+# Install Docker Compose v2 (CLI plugin)
+echo "🧱 Installing Docker Compose v2..."
+brew install docker-compose
+
+# Install Minikube for local Kubernetes
+echo "🏗️ Installing Minikube..."
+brew install minikube
+
+# --- Local Cloud simulators & dashboards ---
+echo "☁️ Installing LocalStack CLI & Lens..."
 brew install --cask localstack
 brew install --cask lens
 
@@ -95,15 +109,90 @@ brew install --cask little-snitch
 brew install --cask wireshark
 brew install --cask wireshark-app
 
+
+# --- Zsh / Oh My Zsh / Powerlevel10k ---
+echo "💡 Setting up Zsh + Oh My Zsh + Powerlevel10k..."
+
+chsh -s "$(which zsh)"
+
+# Install Oh My Zsh if missing
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  echo "🧩 Installing Oh My Zsh..."
+  RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+else
+  echo "✅ Oh My Zsh already installed."
+fi
+
+# Install Powerlevel10k
+if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]; then
+  echo "🎨 Installing Powerlevel10k theme..."
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+    ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+fi
+
+# Update ~/.zshrc for plugins + theme
+if ! grep -q "ZSH_THEME=" ~/.zshrc; then
+  echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> ~/.zshrc
+else
+  sed -i '' 's|^ZSH_THEME=.*|ZSH_THEME="powerlevel10k/powerlevel10k"|' ~/.zshrc
+fi
+
+if ! grep -q "plugins=(" ~/.zshrc; then
+  echo "plugins=(git zsh-autosuggestions zsh-syntax-highlighting kubectl aws docker)" >> ~/.zshrc
+fi
+
+# Add DevOps aliases and plugin sourcing
+cat <<'EOF' >> ~/.zshrc
+
+# ---- DevOps Aliases ----
+alias k="kubectl"
+alias tf="terraform"
+alias lg="lazygit"
+alias ld="lazydocker"
+alias cls="clear"
+alias gs="git status"
+alias gp="git pull"
+alias dc="docker compose"
+alias kctx="kubectx"
+alias kns="kubens"
+alias ls="ls -GFh"
+alias ll="ls -lAh"
+alias mk="minikube"
+alias lsx="localstack"
+
+# Load Zsh plugins
+[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# FZF integration
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# Minikube helpers
+alias mkstart="minikube start --driver=docker"
+alias mkstop="minikube stop"
+alias mkdash="minikube dashboard"
+EOF
+
 # --- Cleanup ---
 echo "🧹 Cleaning up..."
 brew cleanup
 
-echo "🎉 Setup complete!"
-echo "👉 Suggested next steps:"
-echo "  - Launch iTerm2 and set zsh as default shell: chsh -s $(which zsh)"
-echo "  - Install Oh My Zsh: https://ohmyz.sh/"
-echo "  - Sign into Docker Desktop and Slack"
-echo "  - Configure Lens with your kubeconfig"
-echo "  - Enjoy your new DevOps Mac setup 🚀"
+
+echo ""
+echo "🎉 DevOps Mac setup complete!"
+echo ""
+echo "👉 Next steps:"
+echo "  1. Restart your terminal or open iTerm2."
+echo "  2. Powerlevel10k will guide you through prompt customization."
+echo "  3. Verify installs:"
+echo "     kubectl version --client"
+echo "     terraform version"
+echo "     docker version"
+echo "     minikube version"
+echo "     localstack --version"
+echo "  4. Configure Lens with your kubeconfig"
+echo "  5. Sign into Docker Desktop and Slack"
+echo ""
+echo "🚀 You now have a full-featured local DevOps workstation on macOS!"
+
 
