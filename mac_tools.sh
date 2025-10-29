@@ -38,7 +38,7 @@ brew install \
   kubectl \
   k9s \
   kubectx \
-  kubens \
+  kubent \
   helm \
   terraform \
   awscli \
