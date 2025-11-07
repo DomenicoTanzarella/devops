@@ -41,6 +41,7 @@ brew install \
   kubent \
   helm \
   terraform \
+  graphviz \
   awscli \
   google-cloud-sdk \
   lazygit \
